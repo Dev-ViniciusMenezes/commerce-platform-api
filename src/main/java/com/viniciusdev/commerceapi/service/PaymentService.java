@@ -4,6 +4,8 @@ package com.viniciusdev.commerceapi.service;
 import com.viniciusdev.commerceapi.database.model.Order;
 import com.viniciusdev.commerceapi.database.model.Payment;
 import com.viniciusdev.commerceapi.dto.PaymentResponse;
+import com.viniciusdev.commerceapi.exception.PaymentAlreadyExistsException;
+import com.viniciusdev.commerceapi.exception.ResourceNotFoundException;
 import com.viniciusdev.commerceapi.mapper.PaymentMapper;
 import com.viniciusdev.commerceapi.database.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +31,7 @@ public class PaymentService {
 
 
     public PaymentResponse findPaymentById(Long id) {
-        Payment payment = paymentRepository.findById(id).orElseThrow(() -> new RuntimeException("Payment not found"));
+        Payment payment = paymentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Payment not found " + id));
         return paymentMapper.toDTO(payment);
     }
 
@@ -41,7 +43,7 @@ public class PaymentService {
     }
 
     public void deletePayment(Long id) {
-        Payment payment = paymentRepository.findById(id).orElseThrow(() -> new RuntimeException("Payment not found"));
+        Payment payment = paymentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Payment not found" + id));
         paymentRepository.delete(payment);
     }
 

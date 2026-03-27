@@ -3,6 +3,7 @@ package com.viniciusdev.commerceapi.service;
 import com.viniciusdev.commerceapi.database.model.User;
 import com.viniciusdev.commerceapi.dto.UserRequest;
 import com.viniciusdev.commerceapi.dto.UserResponse;
+import com.viniciusdev.commerceapi.exception.ResourceNotFoundException;
 import com.viniciusdev.commerceapi.mapper.UserMapper;
 import com.viniciusdev.commerceapi.database.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class UserService {
     }
 
     public UserResponse findById(Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found " + id));
         return userMapper.toDTO(user);
     }
 
@@ -38,7 +39,7 @@ public class UserService {
 
 
     public UserResponse update(Long id, UserRequest userRequest) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found " + id));
         userMapper.toUpdate(user, userRequest);
         userRepository.save(user);
         return userMapper.toDTO(user);
@@ -46,7 +47,8 @@ public class UserService {
 
 
     public void delete(Long id) {
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        userRepository.delete(user);
     }
 
 }

@@ -8,7 +8,7 @@ import com.viniciusdev.commerceapi.database.model.User;
 import com.viniciusdev.commerceapi.dto.OrderRequest;
 import com.viniciusdev.commerceapi.dto.OrderResponse;
 import com.viniciusdev.commerceapi.enums.OrderStatus;
-import com.viniciusdev.commerceapi.mapper.OrderItemMapper;
+import com.viniciusdev.commerceapi.exception.*;
 import com.viniciusdev.commerceapi.mapper.OrderMapper;
 import com.viniciusdev.commerceapi.database.repository.OrderRepository;
 import com.viniciusdev.commerceapi.database.repository.ProductRepository;
@@ -29,28 +29,37 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
-    private final OrderItemMapper orderItemMapper;
+
 
     public OrderResponse createOrder(OrderRequest request, Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found " + userId));
         Order order = orderMapper.toEntity(request, user);
+        order.setStatus(OrderStatus.WAITING_PAYMENT);
         orderRepository.save(order);
         return orderMapper.toDTO(order);
     }
 
     public OrderResponse updateOrder(Long orderId, OrderRequest request) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
+
+        if (order.getStatus() != OrderStatus.WAITING_PAYMENT) {
+            throw new OrderStatusException("Cannot modify an order with status: " + order.getStatus());
+        }
         orderMapper.toUpdate(order, request);
         orderRepository.save(order);
         return orderMapper.toDTO(order);
     }
 
     public void deleteOrder(Long orderId) {
-        orderRepository.deleteById(orderId);
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        if (order.getStatus() != OrderStatus.WAITING_PAYMENT) {
+            throw new OrderStatusException("Cannot delete an order with status: " + order.getStatus());
+        }
+        orderRepository.delete(order);
     }
 
-    public OrderResponse getOrderById(Long orderId) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
+    public OrderResponse getOrderById(Long orderId)  {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
         return orderMapper.toDTO(order);
     }
 
@@ -61,8 +70,25 @@ public class OrderService {
                 .toList();
     }
 
-    public OrderResponse confirmPayment(Long orderId) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
+    public OrderResponse confirmPayment(Long orderId)  {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
+
+        if (order.getStatus() == OrderStatus.CANCELED) {
+            throw new OrderStatusException("Cannot pay a canceled order");
+        }
+
+        if (order.getStatus() == OrderStatus.PAID) {
+            throw new OrderStatusException("Order already paid");
+        }
+
+        if (order.getPayment() != null) {
+            throw new PaymentAlreadyExistsException("Order already has a payment");
+        }
+
+        if (order.getItems().isEmpty()) {
+            throw new EmptyOrderException("Cannot pay an empty order");
+        }
+
         paymentService.createPayment(order);
         order.setStatus(OrderStatus.PAID);
         orderRepository.save(order);
@@ -70,30 +96,47 @@ public class OrderService {
     }
 
     @Scheduled(fixedRate = 5 * 60 * 1000)
-    public void canceledExpiredOrders() {
+    public void cancelExpiredOrders() {
         int expirationInSeconds = 30 * 60;
-        List<Order> expiredOrders = orderRepository.findAll().stream()
-                .filter(order -> order.getStatus().equals(OrderStatus.WAITING_PAYMENT))
+        List<Order> expiredOrders = orderRepository.findByStatus(OrderStatus.WAITING_PAYMENT).stream()
                 .filter(order -> order.getMoment().plusSeconds(expirationInSeconds).isBefore(Instant.now()))
                 .peek(order -> order.setStatus(OrderStatus.CANCELED)).toList();
         orderRepository.saveAll(expiredOrders);
     }
 
-    public void cancelOrder(Long orderId) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
+    public void cancelOrder(Long orderId){
+
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
+        if (order.getStatus() == OrderStatus.PAID) {
+            throw new OrderStatusException("Cannot cancel a paid order");
+        }
+
+        if (order.getStatus() == OrderStatus.CANCELED) {
+            throw new OrderStatusException("Order already canceled");
+        }
         order.setStatus(OrderStatus.CANCELED);
         orderRepository.save(order);
     }
 
     public OrderResponse addItemInOrder(Long orderId, Long productId, Integer quantity) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
-        Product product = productRepository.findById(productId).orElseThrow(() -> new RuntimeException("Product not found"));
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
+        Product product = productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException("Product not found " + productId));
+
+        if (order.getStatus() != OrderStatus.WAITING_PAYMENT) {
+            throw new OrderStatusException("Cannot modify an order with status: " + order.getStatus() + "");
+        }
+
+        if (quantity == null || quantity <= 0) {
+            throw new InvalidQuantityException("Quantity must be greater than zero");
+        }
+
 
         OrderItem existingItem = order.getItems()
                 .stream()
                 .filter(item -> item.getProduct().getId().equals(productId))
                 .findFirst()
                 .orElse(null);
+
 
         if (existingItem != null) {
             existingItem.setQuantity(existingItem.getQuantity() + quantity);
@@ -106,23 +149,34 @@ public class OrderService {
     }
 
     public OrderResponse removeItemInOrder(Long orderId, Long productId) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
         OrderItem orderItem = order.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(productId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Item not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Item not found " + productId));
+        if (order.getStatus() != OrderStatus.WAITING_PAYMENT) {
+            throw new OrderStatusException("Cannot modify an order with status: " + order.getStatus() + "");
+        }
+
         order.removeItem(orderItem);
         orderRepository.save(order);
         return orderMapper.toDTO(order);
     }
 
     public OrderResponse updateItemInOrder(Long orderId, Long productId, Integer quantity) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
         OrderItem orderItem = order.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(productId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Item not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Item not found " + productId));
+        if (order.getStatus() != OrderStatus.WAITING_PAYMENT) {
+            throw new OrderStatusException("Cannot modify an order with status: " + order.getStatus() + "");
+        }
 
+
+        if (quantity == null || quantity <= 0) {
+            throw new InvalidQuantityException("Quantity must be greater than zero");
+        }
         orderItem.setQuantity(quantity);
         orderRepository.save(order);
         return orderMapper.toDTO(order);

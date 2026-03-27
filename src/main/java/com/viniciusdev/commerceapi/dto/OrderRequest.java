@@ -6,7 +6,7 @@ import com.viniciusdev.commerceapi.enums.OrderStatus;
 import java.time.Instant;
 
 public record OrderRequest (
-        OrderStatus status
+
 ){
 }
 

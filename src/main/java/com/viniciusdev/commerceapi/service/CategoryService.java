@@ -3,6 +3,7 @@ package com.viniciusdev.commerceapi.service;
 import com.viniciusdev.commerceapi.database.model.Category;
 import com.viniciusdev.commerceapi.dto.CategoryRequest;
 import com.viniciusdev.commerceapi.dto.CategoryResponse;
+import com.viniciusdev.commerceapi.exception.ResourceNotFoundException;
 import com.viniciusdev.commerceapi.mapper.CategoryMapper;
 import com.viniciusdev.commerceapi.database.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,18 +25,19 @@ public class CategoryService {
     }
 
     public CategoryResponse updateCategory (Long id, CategoryRequest request) {
-        Category category = categoryRepository.findById(id).orElseThrow(() -> new RuntimeException("Category not found"));
+        Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found " + id));
         categoryMapper.toUpdate(category, request);
         categoryRepository.save(category);
         return categoryMapper.toDTO(category);
     }
 
     public void deleteCategory(Long id) {
-        categoryRepository.deleteById(id);
+        Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found " + id));
+        categoryRepository.delete(category);
     }
 
-    public CategoryResponse getCategoryById(Long id) {
-        Category category = categoryRepository.findById(id).orElseThrow(() -> new RuntimeException("Category not found"));
+    public CategoryResponse getCategoryById(Long id)  {
+        Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found " + id));
         return categoryMapper.toDTO(category);
     }
 
