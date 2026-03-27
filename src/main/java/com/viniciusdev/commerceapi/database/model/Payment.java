@@ -20,7 +20,7 @@ public class Payment {
 
     private Instant moment;
 
-    @OneToOne (mappedBy = "payment", cascade = CascadeType.ALL)
-    @MapsId
+    @OneToOne
+    @JoinColumn(name = "order_id")
     private Order order;
 }

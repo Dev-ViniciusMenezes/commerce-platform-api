@@ -4,6 +4,7 @@ import com.viniciusdev.commerceapi.database.model.Category;
 import com.viniciusdev.commerceapi.database.model.Product;
 import com.viniciusdev.commerceapi.dto.ProductRequest;
 import com.viniciusdev.commerceapi.dto.ProductResponse;
+import com.viniciusdev.commerceapi.mapper.ProductMapper;
 import com.viniciusdev.commerceapi.repository.CategoryRepository;
 import com.viniciusdev.commerceapi.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,42 +19,31 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductMapper productMapper;
 
     public ProductResponse getProductById(Long id) {
         Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product not found"));
-        return new ProductResponse(
-                product.getId(),
-                product.getName(),
-                product.getDescription(),
-                product.getPrice(),
-                product.getCategories()
-        );
+        return productMapper.toDTO(product);
     }
 
     public List<ProductResponse> getAllProducts() {
         List <Product> products = productRepository.findAll();
         return products.stream()
-                .map(product -> new ProductResponse(
-                        product.getId(),
-                        product.getName(),
-                        product.getDescription(),
-                        product.getPrice(),
-                        product.getCategories()
-                )).toList();
+                .map(productMapper::toDTO).toList();
     }
 
-    public void createProduct(ProductRequest request) {
-        Product product = new Product(null, request.name(), request.description(), request.price());
+    public ProductResponse createProduct(ProductRequest request) {
+        Product product = productMapper.toEntity(request);
         productRepository.save(product);
+        return productMapper.toDTO(product);
     }
 
 
-    public void updateProduct(Long id, ProductRequest request) {
+    public ProductResponse updateProduct(Long id, ProductRequest request) {
         Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product not found"));
-        product.setName(request.name());
-        product.setDescription(request.description());
-        product.setPrice(request.price());
+        productMapper.toUpdate(product,request);
         productRepository.save(product);
+        return productMapper.toDTO(product);
     }
 
 
@@ -69,13 +59,7 @@ public class ProductService {
         });
         productRepository.save(product);
 
-        return new ProductResponse(
-                product.getId(),
-                product.getName(),
-                product.getDescription(),
-                product.getPrice(),
-                product.getCategories()
-        );
+        return productMapper.toDTO(product);
     }
 
     public void removeCategoriesFromProducts(Long productId, Set<Long> categoryIds) {
@@ -95,17 +79,7 @@ public class ProductService {
             product.addCategory(category);
         });
         productRepository.save(product);
-        return new ProductResponse(
-                product.getId(),
-                product.getName(),
-                product.getDescription(),
-                product.getPrice(),
-                product.getCategories()
-        );
+        return productMapper.toDTO(product);
     }
-
-
-
-
 }
 
