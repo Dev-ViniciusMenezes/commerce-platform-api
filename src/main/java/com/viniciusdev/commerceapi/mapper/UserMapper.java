@@ -3,7 +3,8 @@ package com.viniciusdev.commerceapi.mapper;
 import com.viniciusdev.commerceapi.database.model.User;
 import com.viniciusdev.commerceapi.dto.UserRequest;
 import com.viniciusdev.commerceapi.dto.UserResponse;
-import com.viniciusdev.commerceapi.repository.UserRepository;
+import com.viniciusdev.commerceapi.database.repository.UserRepository;
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -5,8 +5,7 @@ import com.viniciusdev.commerceapi.database.model.Order;
 import com.viniciusdev.commerceapi.database.model.Payment;
 import com.viniciusdev.commerceapi.dto.PaymentResponse;
 import com.viniciusdev.commerceapi.mapper.PaymentMapper;
-import com.viniciusdev.commerceapi.repository.OrderRepository;
-import com.viniciusdev.commerceapi.repository.PaymentRepository;
+import com.viniciusdev.commerceapi.database.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

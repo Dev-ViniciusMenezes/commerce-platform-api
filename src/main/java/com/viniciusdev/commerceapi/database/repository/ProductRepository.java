@@ -1,4 +1,4 @@
-package com.viniciusdev.commerceapi.repository;
+package com.viniciusdev.commerceapi.database.repository;
 
 
 import com.viniciusdev.commerceapi.database.model.Product;

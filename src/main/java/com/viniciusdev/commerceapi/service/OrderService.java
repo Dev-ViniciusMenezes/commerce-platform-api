@@ -5,23 +5,20 @@ import com.viniciusdev.commerceapi.database.model.Order;
 import com.viniciusdev.commerceapi.database.model.OrderItem;
 import com.viniciusdev.commerceapi.database.model.Product;
 import com.viniciusdev.commerceapi.database.model.User;
-import com.viniciusdev.commerceapi.dto.OrderItemResponse;
 import com.viniciusdev.commerceapi.dto.OrderRequest;
 import com.viniciusdev.commerceapi.dto.OrderResponse;
-import com.viniciusdev.commerceapi.dto.UserResponse;
 import com.viniciusdev.commerceapi.enums.OrderStatus;
 import com.viniciusdev.commerceapi.mapper.OrderItemMapper;
 import com.viniciusdev.commerceapi.mapper.OrderMapper;
-import com.viniciusdev.commerceapi.repository.OrderRepository;
-import com.viniciusdev.commerceapi.repository.ProductRepository;
-import com.viniciusdev.commerceapi.repository.UserRepository;
+import com.viniciusdev.commerceapi.database.repository.OrderRepository;
+import com.viniciusdev.commerceapi.database.repository.ProductRepository;
+import com.viniciusdev.commerceapi.database.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

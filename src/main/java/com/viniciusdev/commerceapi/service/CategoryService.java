@@ -4,7 +4,7 @@ import com.viniciusdev.commerceapi.database.model.Category;
 import com.viniciusdev.commerceapi.dto.CategoryRequest;
 import com.viniciusdev.commerceapi.dto.CategoryResponse;
 import com.viniciusdev.commerceapi.mapper.CategoryMapper;
-import com.viniciusdev.commerceapi.repository.CategoryRepository;
+import com.viniciusdev.commerceapi.database.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;

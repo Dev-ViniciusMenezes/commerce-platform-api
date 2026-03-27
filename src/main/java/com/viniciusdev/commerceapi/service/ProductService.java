@@ -5,8 +5,8 @@ import com.viniciusdev.commerceapi.database.model.Product;
 import com.viniciusdev.commerceapi.dto.ProductRequest;
 import com.viniciusdev.commerceapi.dto.ProductResponse;
 import com.viniciusdev.commerceapi.mapper.ProductMapper;
-import com.viniciusdev.commerceapi.repository.CategoryRepository;
-import com.viniciusdev.commerceapi.repository.ProductRepository;
+import com.viniciusdev.commerceapi.database.repository.CategoryRepository;
+import com.viniciusdev.commerceapi.database.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

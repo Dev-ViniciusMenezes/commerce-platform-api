@@ -2,7 +2,6 @@ package com.viniciusdev.commerceapi.mapper;
 
 import com.viniciusdev.commerceapi.database.model.Order;
 import com.viniciusdev.commerceapi.database.model.User;
-import com.viniciusdev.commerceapi.dto.OrderItemResponse;
 import com.viniciusdev.commerceapi.dto.OrderRequest;
 import com.viniciusdev.commerceapi.dto.OrderResponse;
 import lombok.RequiredArgsConstructor;

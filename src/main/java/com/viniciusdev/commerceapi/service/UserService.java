@@ -4,7 +4,7 @@ import com.viniciusdev.commerceapi.database.model.User;
 import com.viniciusdev.commerceapi.dto.UserRequest;
 import com.viniciusdev.commerceapi.dto.UserResponse;
 import com.viniciusdev.commerceapi.mapper.UserMapper;
-import com.viniciusdev.commerceapi.repository.UserRepository;
+import com.viniciusdev.commerceapi.database.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
