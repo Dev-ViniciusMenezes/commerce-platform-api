@@ -42,10 +42,6 @@ public class PaymentService {
                 .toList();
     }
 
-    public void deletePayment(Long id) {
-        Payment payment = paymentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Payment not found" + id));
-        paymentRepository.delete(payment);
-    }
 
 }
 

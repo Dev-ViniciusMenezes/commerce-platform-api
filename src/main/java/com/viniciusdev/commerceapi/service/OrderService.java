@@ -5,10 +5,13 @@ import com.viniciusdev.commerceapi.database.model.Order;
 import com.viniciusdev.commerceapi.database.model.OrderItem;
 import com.viniciusdev.commerceapi.database.model.Product;
 import com.viniciusdev.commerceapi.database.model.User;
+import com.viniciusdev.commerceapi.dto.OrderItemRequest;
 import com.viniciusdev.commerceapi.dto.OrderRequest;
 import com.viniciusdev.commerceapi.dto.OrderResponse;
+import com.viniciusdev.commerceapi.dto.OrderUpdate;
 import com.viniciusdev.commerceapi.enums.OrderStatus;
 import com.viniciusdev.commerceapi.exception.*;
+import com.viniciusdev.commerceapi.mapper.OrderItemMapper;
 import com.viniciusdev.commerceapi.mapper.OrderMapper;
 import com.viniciusdev.commerceapi.database.repository.OrderRepository;
 import com.viniciusdev.commerceapi.database.repository.ProductRepository;
@@ -29,26 +32,17 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
+    private final OrderItemMapper orderItemMapper;
 
 
-    public OrderResponse createOrder(OrderRequest request, Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found " + userId));
+    public OrderResponse createOrder(OrderRequest request){
+        User user = userRepository.findById(request.userId()).orElseThrow(() -> new ResourceNotFoundException("User not found " + request.userId()));
         Order order = orderMapper.toEntity(request, user);
         order.setStatus(OrderStatus.WAITING_PAYMENT);
         orderRepository.save(order);
         return orderMapper.toDTO(order);
     }
 
-    public OrderResponse updateOrder(Long orderId, OrderRequest request) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
-
-        if (order.getStatus() != OrderStatus.WAITING_PAYMENT) {
-            throw new OrderStatusException("Cannot modify an order with status: " + order.getStatus());
-        }
-        orderMapper.toUpdate(order, request);
-        orderRepository.save(order);
-        return orderMapper.toDTO(order);
-    }
 
     public void deleteOrder(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found"));
@@ -104,7 +98,7 @@ public class OrderService {
         orderRepository.saveAll(expiredOrders);
     }
 
-    public void cancelOrder(Long orderId){
+    public OrderResponse cancelOrder(Long orderId){
 
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
         if (order.getStatus() == OrderStatus.PAID) {
@@ -116,34 +110,39 @@ public class OrderService {
         }
         order.setStatus(OrderStatus.CANCELED);
         orderRepository.save(order);
+
+        return orderMapper.toDTO(order);
     }
 
-    public OrderResponse addItemInOrder(Long orderId, Long productId, Integer quantity) {
+    public OrderResponse addItemInOrder(Long orderId, OrderItemRequest request) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
-        Product product = productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException("Product not found " + productId));
+        Product product = productRepository.findById(request.productId()).orElseThrow(() -> new ResourceNotFoundException("Product not found " + request.productId()));
 
         if (order.getStatus() != OrderStatus.WAITING_PAYMENT) {
             throw new OrderStatusException("Cannot modify an order with status: " + order.getStatus() + "");
         }
 
-        if (quantity == null || quantity <= 0) {
+        if (request.quantity() == null || request.quantity() <= 0) {
             throw new InvalidQuantityException("Quantity must be greater than zero");
         }
 
 
         OrderItem existingItem = order.getItems()
                 .stream()
-                .filter(item -> item.getProduct().getId().equals(productId))
+                .filter(item -> item.getProduct().getId().equals(request.productId()))
                 .findFirst()
                 .orElse(null);
 
 
         if (existingItem != null) {
-            existingItem.setQuantity(existingItem.getQuantity() + quantity);
+            existingItem.setQuantity(existingItem.getQuantity() + request.quantity());
         } else {
-            OrderItem orderItem = new OrderItem(null, product.getPrice(), quantity, order, product);
+            OrderItem orderItem = orderItemMapper.toEntity(request);
+            orderItem.setProduct(product);
+            orderItem.setPrice(product.getPrice());
             order.addItem(orderItem);
         }
+
         orderRepository.save(order);
         return orderMapper.toDTO(order);
     }
@@ -163,7 +162,7 @@ public class OrderService {
         return orderMapper.toDTO(order);
     }
 
-    public OrderResponse updateItemInOrder(Long orderId, Long productId, Integer quantity) {
+    public OrderResponse updateItemInOrder(Long orderId, Long productId, OrderItemRequest request) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
         OrderItem orderItem = order.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(productId))
@@ -174,10 +173,10 @@ public class OrderService {
         }
 
 
-        if (quantity == null || quantity <= 0) {
+        if (request.quantity() == null || request.quantity() <= 0) {
             throw new InvalidQuantityException("Quantity must be greater than zero");
         }
-        orderItem.setQuantity(quantity);
+        orderItem.setQuantity(request.quantity());
         orderRepository.save(order);
         return orderMapper.toDTO(order);
     }

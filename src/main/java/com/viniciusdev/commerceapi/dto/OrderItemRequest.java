@@ -1,4 +1,7 @@
 package com.viniciusdev.commerceapi.dto;
 
-public class OrderItemRequest {
+public record OrderItemRequest (
+        Long productId,
+        Integer quantity
+){
 }

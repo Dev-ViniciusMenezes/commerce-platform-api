@@ -4,6 +4,8 @@ import com.viniciusdev.commerceapi.database.model.Order;
 import com.viniciusdev.commerceapi.database.model.User;
 import com.viniciusdev.commerceapi.dto.OrderRequest;
 import com.viniciusdev.commerceapi.dto.OrderResponse;
+import com.viniciusdev.commerceapi.dto.OrderUpdate;
+import com.viniciusdev.commerceapi.enums.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +20,7 @@ public class OrderMapper {
     private final OrderItemMapper orderItemMapper;
 
     public Order toEntity(OrderRequest request, User user) {
-        Order order = new Order(null, Instant.now(), request.status(), user, null);
+        Order order = new Order(null, Instant.now(), OrderStatus.WAITING_PAYMENT, user, null);
         return order;
     }
 
@@ -31,15 +33,9 @@ public class OrderMapper {
                         .map(orderItemMapper::toDTO)
                         .collect(Collectors.toSet()),
                 order.getPayment() != null ? order.getPayment().getMoment():  null,
-                userMapper.toDTO(order.getClient())
+                userMapper.toDTO(order.getClient()),
+                order.getTotal()
         );
     }
 
-    public Order toUpdate(Order order, OrderRequest request) {
-        if (request.status() != null) {
-            order.setStatus(request.status());
-        }
-
-        return order;
-    }
 }

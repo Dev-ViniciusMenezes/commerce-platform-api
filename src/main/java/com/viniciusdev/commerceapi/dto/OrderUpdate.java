@@ -1,4 +1,9 @@
 package com.viniciusdev.commerceapi.dto;
 
-public class OrderUpdate {
+import com.viniciusdev.commerceapi.enums.OrderStatus;
+
+public record OrderUpdate (
+        OrderStatus status
+) {
+
 }

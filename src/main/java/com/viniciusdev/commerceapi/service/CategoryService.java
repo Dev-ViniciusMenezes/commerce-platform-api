@@ -3,6 +3,7 @@ package com.viniciusdev.commerceapi.service;
 import com.viniciusdev.commerceapi.database.model.Category;
 import com.viniciusdev.commerceapi.dto.CategoryRequest;
 import com.viniciusdev.commerceapi.dto.CategoryResponse;
+import com.viniciusdev.commerceapi.exception.BusinessException;
 import com.viniciusdev.commerceapi.exception.ResourceNotFoundException;
 import com.viniciusdev.commerceapi.mapper.CategoryMapper;
 import com.viniciusdev.commerceapi.database.repository.CategoryRepository;
@@ -33,6 +34,9 @@ public class CategoryService {
 
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found " + id));
+        if (!category.getProducts().isEmpty()) {
+            throw new BusinessException("Cannot delete category with products");
+        }
         categoryRepository.delete(category);
     }
 

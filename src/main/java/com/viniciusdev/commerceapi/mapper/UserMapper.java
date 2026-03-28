@@ -9,10 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class UserMapper {
 
-    private final UserRepository repository;
 
     public User toEntity (UserRequest request) {
         User user = new User(null , request.name(),request.email(),request.phone(), request.password());
