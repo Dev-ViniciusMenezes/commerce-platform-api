@@ -1,9 +1,4 @@
 package com.viniciusdev.commerceapi.dto;
 
-
-
-public record OrderRequest (
-
-){
+public class OrderUpdate {
 }
-
