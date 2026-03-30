@@ -35,7 +35,7 @@ public class OrderService {
     private final OrderItemMapper orderItemMapper;
 
 
-    public OrderResponse createOrder(OrderRequest request){
+    public OrderResponse createOrder(OrderRequest request) {
         User user = userRepository.findById(request.userId()).orElseThrow(() -> new ResourceNotFoundException("User not found " + request.userId()));
         Order order = orderMapper.toEntity(request, user);
         order.setStatus(OrderStatus.WAITING_PAYMENT);
@@ -52,7 +52,7 @@ public class OrderService {
         orderRepository.delete(order);
     }
 
-    public OrderResponse getOrderById(Long orderId)  {
+    public OrderResponse getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
         return orderMapper.toDTO(order);
     }
@@ -64,7 +64,7 @@ public class OrderService {
                 .toList();
     }
 
-    public OrderResponse confirmPayment(Long orderId)  {
+    public OrderResponse confirmPayment(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
 
         if (order.getStatus() == OrderStatus.CANCELED) {
@@ -92,13 +92,36 @@ public class OrderService {
     @Scheduled(fixedRate = 5 * 60 * 1000)
     public void cancelExpiredOrders() {
         int expirationInSeconds = 30 * 60;
-        List<Order> expiredOrders = orderRepository.findByStatus(OrderStatus.WAITING_PAYMENT).stream()
-                .filter(order -> order.getMoment().plusSeconds(expirationInSeconds).isBefore(Instant.now()))
-                .peek(order -> order.setStatus(OrderStatus.CANCELED)).toList();
+        List<Order> expiredOrders = orderRepository.findByStatus(OrderStatus.WAITING_PAYMENT);
+        expiredOrders.forEach(order -> {
+            if (order.getMoment().plusSeconds(expirationInSeconds).isBefore(Instant.now()))
+                order.setStatus(OrderStatus.CANCELED);
+        });
         orderRepository.saveAll(expiredOrders);
     }
 
-    public OrderResponse cancelOrder(Long orderId){
+    @Scheduled(fixedRate = 10 * 60 * 1000)
+    public void shippedOrders() {
+        List<Order> shippedOrders = orderRepository.findByStatus(OrderStatus.PAID);
+        shippedOrders.forEach(order -> {
+            order.setStatus(OrderStatus.SHIPPED);
+        });
+
+        orderRepository.saveAll(shippedOrders);
+    }
+
+    public OrderResponse confirmDelivered (Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
+        if (order.getStatus() != OrderStatus.SHIPPED){
+            throw new OrderStatusException("Order not shipped");
+        }
+
+        order.setStatus(OrderStatus.DELIVERED);
+        orderRepository.save(order);
+        return orderMapper.toDTO(order);
+    }
+
+    public OrderResponse cancelOrder(Long orderId) {
 
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
         if (order.getStatus() == OrderStatus.PAID) {

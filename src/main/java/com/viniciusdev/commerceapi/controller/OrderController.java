@@ -39,16 +39,23 @@ public class OrderController {
         return orderService.getAllOrders();
     }
 
-    @PutMapping("/{id}/confirm")
+    @PatchMapping("/{id}/confirm")
     @ResponseStatus (HttpStatus.OK)
     public OrderResponse confirmPayment (@PathVariable Long id) {
         return orderService.confirmPayment(id);
     }
 
-    @PutMapping("/{id}/cancel")
+    @PatchMapping("/{id}/cancel")
     @ResponseStatus (HttpStatus.OK)
     public OrderResponse cancelOrder (@PathVariable Long id) {
         return orderService.cancelOrder(id);
+    }
+
+
+    @PatchMapping("/{id}/confirm-delivery")
+    @ResponseStatus (HttpStatus.OK)
+    public OrderResponse confirmDelivery (@PathVariable Long id) {
+        return orderService.confirmDelivered(id);
     }
 
     @PostMapping("/{orderId}/items")
