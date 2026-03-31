@@ -3,6 +3,10 @@ package com.viniciusdev.commerceapi.controller;
 import com.viniciusdev.commerceapi.dto.ProductRequest;
 import com.viniciusdev.commerceapi.dto.ProductResponse;
 import com.viniciusdev.commerceapi.service.ProductService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -20,13 +24,13 @@ public class ProductController {
 
     @PostMapping
     @ResponseStatus (HttpStatus.CREATED)
-    public ProductResponse createProduct (@RequestBody ProductRequest request) {
+    public ProductResponse createProduct (@RequestBody @Valid ProductRequest request) {
         return productService.createProduct(request);
     }
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ProductResponse updateProduct (@PathVariable Long id, @RequestBody ProductRequest request) {
+    public ProductResponse updateProduct (@PathVariable Long id, @RequestBody @Valid ProductRequest request) {
         return productService.updateProduct(id, request);
     }
 
@@ -50,19 +54,19 @@ public class ProductController {
 
     @PostMapping("/{productId}/categories")
     @ResponseStatus(HttpStatus.CREATED)
-    public ProductResponse addCategoriesToProduct (@PathVariable Long productId, @RequestBody Set<Long> categoryIds) {
+    public ProductResponse addCategoriesToProduct (@PathVariable Long productId, @RequestBody @NotNull (message = "Category ids cannot be null") @Size(min = 1, message = "At least one category id is required") Set<Long> categoryIds) {
         return productService.addCategoriesToProduct(productId, categoryIds);
     }
 
     @PutMapping("/{productId}/categories")
     @ResponseStatus(HttpStatus.OK)
-    public ProductResponse setCategoriesForProduct (@PathVariable Long productId, @RequestBody Set<Long> categoryIds) {
+    public ProductResponse setCategoriesForProduct (@PathVariable Long productId, @RequestBody @NotNull (message = "Category ids cannot be null") @Size(min = 1, message = "At least one category id is required") Set<Long> categoryIds) {
         return productService.setCategoriesForProduct(productId, categoryIds);
     }
 
     @DeleteMapping("/{productId}/categories")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeCategoriesFromProducts (@PathVariable Long productId, @RequestBody Set<Long> categoryIds) {
+    public void removeCategoriesFromProducts (@PathVariable Long productId, @RequestBody @NotNull (message = "Category ids cannot be null") @Size(min = 1, message = "At least one category id is required") Set<Long> categoryIds) {
         productService.removeCategoriesFromProducts(productId, categoryIds);
     }
 

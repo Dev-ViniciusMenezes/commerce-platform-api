@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 
 import java.time.Instant;
+import java.util.Map;
+
 
 @Builder
 public record ErrorResponse(
@@ -11,6 +13,7 @@ public record ErrorResponse(
         Instant timestamp,
         Integer status,
         String message,
+        Map<String, String> errors,
         String path
 ) {
 }

@@ -37,11 +37,6 @@ public class ProductService {
     }
 
     public ProductResponse createProduct(ProductRequest request) {
-
-        if (request.price() == null || request.price().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidPriceException("Price must be greater than zero");
-        }
-
         Product product = productMapper.toEntity(request);
         productRepository.save(product);
         return productMapper.toDTO(product);
@@ -49,9 +44,6 @@ public class ProductService {
 
 
     public ProductResponse updateProduct(Long id, ProductRequest request){
-        if (request.price() != null && request.price().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidPriceException("Price must be greater than zero");
-        }
         Product product = productRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Product not found " + id));
         productMapper.toUpdate(product,request);
         productRepository.save(product);

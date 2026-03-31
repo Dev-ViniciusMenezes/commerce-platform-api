@@ -3,6 +3,7 @@ package com.viniciusdev.commerceapi.controller;
 import com.viniciusdev.commerceapi.dto.CategoryRequest;
 import com.viniciusdev.commerceapi.dto.CategoryResponse;
 import com.viniciusdev.commerceapi.service.CategoryService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -18,12 +19,12 @@ public class CategoryController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CategoryResponse createCategory (@RequestBody CategoryRequest request) {
+    public CategoryResponse createCategory (@RequestBody @Valid CategoryRequest request) {
         return categoryService.createCategory(request);
     }
 
     @PutMapping("/{id}")
-    public CategoryResponse updateCategory (@PathVariable Long id, @RequestBody CategoryRequest request) {
+    public CategoryResponse updateCategory (@PathVariable Long id, @RequestBody @Valid CategoryRequest request) {
         return categoryService.updateCategory(id, request);
     }
 

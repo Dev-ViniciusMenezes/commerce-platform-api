@@ -3,6 +3,7 @@ package com.viniciusdev.commerceapi.controller;
 import com.viniciusdev.commerceapi.dto.UserRequest;
 import com.viniciusdev.commerceapi.dto.UserResponse;
 import com.viniciusdev.commerceapi.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse createUser(@RequestBody UserRequest request) {
+    public UserResponse createUser(@RequestBody @Valid UserRequest request) {
         return userService.create(request);
     }
 
@@ -36,7 +37,7 @@ public class UserController {
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public UserResponse updateUser(@PathVariable Long id, @RequestBody UserRequest request) {
+    public UserResponse updateUser(@PathVariable Long id, @RequestBody @Valid UserRequest request) {
         return userService.update(id, request);
     }
 

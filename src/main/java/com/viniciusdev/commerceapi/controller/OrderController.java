@@ -2,6 +2,7 @@ package com.viniciusdev.commerceapi.controller;
 
 import com.viniciusdev.commerceapi.dto.*;
 import com.viniciusdev.commerceapi.service.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +18,7 @@ public class OrderController {
 
     @PostMapping
     @ResponseStatus (HttpStatus.CREATED)
-    public OrderResponse createOrder (@RequestBody OrderRequest request) {
+    public OrderResponse createOrder (@RequestBody @Valid OrderRequest request) {
         return orderService.createOrder(request);
     }
 
@@ -60,13 +61,13 @@ public class OrderController {
 
     @PostMapping("/{orderId}/items")
     @ResponseStatus (HttpStatus.CREATED)
-    public OrderResponse addItemInOrder(@PathVariable Long orderId, @RequestBody OrderItemRequest request) {
+    public OrderResponse addItemInOrder(@PathVariable Long orderId, @RequestBody @Valid OrderItemRequest request) {
         return orderService.addItemInOrder(orderId, request);
     }
 
     @PutMapping("/{orderId}/items/{productId}")
     @ResponseStatus (HttpStatus.OK)
-    public OrderResponse updateItemInOrder(@PathVariable Long orderId,@PathVariable Long productId, @RequestBody OrderItemRequest request) {
+    public OrderResponse updateItemInOrder(@PathVariable Long orderId,@PathVariable Long productId, @RequestBody @Valid OrderItemRequest request) {
         return orderService.updateItemInOrder(orderId, productId, request);
     }
 

@@ -145,10 +145,6 @@ public class OrderService {
             throw new OrderStatusException("Cannot modify an order with status: " + order.getStatus() + "");
         }
 
-        if (request.quantity() == null || request.quantity() <= 0) {
-            throw new InvalidQuantityException("Quantity must be greater than zero");
-        }
-
 
         OrderItem existingItem = order.getItems()
                 .stream()
@@ -196,9 +192,6 @@ public class OrderService {
         }
 
 
-        if (request.quantity() == null || request.quantity() <= 0) {
-            throw new InvalidQuantityException("Quantity must be greater than zero");
-        }
         orderItem.setQuantity(request.quantity());
         orderRepository.save(order);
         return orderMapper.toDTO(order);
