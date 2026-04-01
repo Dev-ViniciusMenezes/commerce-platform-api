@@ -72,11 +72,7 @@ public class OrderService {
         }
 
         if (order.getStatus() == OrderStatus.PAID) {
-            throw new OrderStatusException("Order already paid");
-        }
-
-        if (order.getPayment() != null) {
-            throw new PaymentAlreadyExistsException("Order already has a payment");
+            throw new OrderStatusException("Order already has a payment");
         }
 
         if (order.getItems().isEmpty()) {
