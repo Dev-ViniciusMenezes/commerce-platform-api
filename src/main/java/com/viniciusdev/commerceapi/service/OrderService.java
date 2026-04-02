@@ -85,7 +85,7 @@ public class OrderService {
         return orderMapper.toDTO(order);
     }
 
-    @Scheduled(fixedRate = 5 * 60 * 1000)
+    @Scheduled(fixedRate = 25 * 60 * 1000)
     public void cancelExpiredOrders() {
         int expirationInSeconds = 30 * 60;
         List<Order> expiredOrders = orderRepository.findByStatus(OrderStatus.WAITING_PAYMENT);

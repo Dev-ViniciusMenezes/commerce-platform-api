@@ -4,16 +4,20 @@ import com.viniciusdev.commerceapi.database.model.User;
 import com.viniciusdev.commerceapi.dto.UserRequest;
 import com.viniciusdev.commerceapi.dto.UserResponse;
 import com.viniciusdev.commerceapi.database.repository.UserRepository;
+import com.viniciusdev.commerceapi.enums.UserRole;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class UserMapper {
 
+    private final PasswordEncoder passwordEncoder;
 
     public User toEntity (UserRequest request) {
-        User user = new User(null , request.name(),request.email(),request.phone(), request.password());
+        User user = new User(null , request.name(),request.email(),request.phone(), passwordEncoder.encode(request.password()), UserRole.USER);
         return user;
     }
 
@@ -38,7 +42,7 @@ public class UserMapper {
             user.setPhone(request.phone());
         }
         if (request.password()!= null) {
-            user.setPassword(request.password());
+            user.setPassword(passwordEncoder.encode(request.password()));
         }
         return user;
     }
