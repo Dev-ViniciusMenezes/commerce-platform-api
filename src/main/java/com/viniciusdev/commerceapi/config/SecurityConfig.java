@@ -61,6 +61,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/v1/payments/**").hasRole("ADMIN")
 
                         //ORDER
+                        .requestMatchers(HttpMethod.GET, "/v1/orders/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/v1/orders").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/v1/orders/{id}/cancel").hasRole("ADMIN")
 
                         //USER

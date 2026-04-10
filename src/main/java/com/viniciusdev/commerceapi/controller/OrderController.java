@@ -4,6 +4,7 @@ import com.viniciusdev.commerceapi.database.model.User;
 import com.viniciusdev.commerceapi.dto.*;
 import com.viniciusdev.commerceapi.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Orders", description = "Management for orders")
 @RestController
 @RequestMapping("/v1/orders")
 @RequiredArgsConstructor
