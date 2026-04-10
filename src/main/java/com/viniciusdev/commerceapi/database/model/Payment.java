@@ -1,5 +1,6 @@
 package com.viniciusdev.commerceapi.database.model;
 
+import com.viniciusdev.commerceapi.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,6 +20,9 @@ public class Payment {
     private Long id;
 
     private Instant moment;
+
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status;
 
     @OneToOne
     @JoinColumn(name = "order_id")

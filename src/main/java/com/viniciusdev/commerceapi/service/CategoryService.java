@@ -7,6 +7,7 @@ import com.viniciusdev.commerceapi.exception.BusinessException;
 import com.viniciusdev.commerceapi.exception.ResourceNotFoundException;
 import com.viniciusdev.commerceapi.mapper.CategoryMapper;
 import com.viniciusdev.commerceapi.database.repository.CategoryRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -19,19 +20,21 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
 
+    @Transactional
     public CategoryResponse createCategory(CategoryRequest request) {
         Category category = categoryMapper.toEntity(request);
         categoryRepository.save(category);
         return categoryMapper.toDTO(category);
     }
 
+    @Transactional
     public CategoryResponse updateCategory (Long id, CategoryRequest request) {
         Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found " + id));
         categoryMapper.toUpdate(category, request);
-        categoryRepository.save(category);
         return categoryMapper.toDTO(category);
     }
 
+    @Transactional
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found " + id));
         if (!category.getProducts().isEmpty()) {

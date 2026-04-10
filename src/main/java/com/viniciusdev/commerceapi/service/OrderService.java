@@ -6,16 +6,16 @@ import com.viniciusdev.commerceapi.database.model.OrderItem;
 import com.viniciusdev.commerceapi.database.model.Product;
 import com.viniciusdev.commerceapi.database.model.User;
 import com.viniciusdev.commerceapi.dto.OrderItemRequest;
-import com.viniciusdev.commerceapi.dto.OrderRequest;
 import com.viniciusdev.commerceapi.dto.OrderResponse;
-import com.viniciusdev.commerceapi.dto.OrderUpdate;
 import com.viniciusdev.commerceapi.enums.OrderStatus;
+import com.viniciusdev.commerceapi.enums.PaymentStatus;
 import com.viniciusdev.commerceapi.exception.*;
 import com.viniciusdev.commerceapi.mapper.OrderItemMapper;
 import com.viniciusdev.commerceapi.mapper.OrderMapper;
 import com.viniciusdev.commerceapi.database.repository.OrderRepository;
 import com.viniciusdev.commerceapi.database.repository.ProductRepository;
 import com.viniciusdev.commerceapi.database.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -29,21 +29,20 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final PaymentService paymentService;
-    private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
 
 
-    public OrderResponse createOrder(OrderRequest request) {
-        User user = userRepository.findById(request.userId()).orElseThrow(() -> new ResourceNotFoundException("User not found " + request.userId()));
-        Order order = orderMapper.toEntity(request, user);
+    @Transactional
+    public OrderResponse createOrder(User user) {
+        Order order = orderMapper.toEntity(user);
         order.setStatus(OrderStatus.WAITING_PAYMENT);
         orderRepository.save(order);
         return orderMapper.toDTO(order);
     }
 
-
+    @Transactional
     public void deleteOrder(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         if (order.getStatus() != OrderStatus.WAITING_PAYMENT) {
@@ -52,10 +51,12 @@ public class OrderService {
         orderRepository.delete(order);
     }
 
+
     public OrderResponse getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
         return orderMapper.toDTO(order);
     }
+
 
     public List<OrderResponse> getAllOrders() {
         List<Order> orders = orderRepository.findAll();
@@ -64,15 +65,24 @@ public class OrderService {
                 .toList();
     }
 
-    public OrderResponse confirmPayment(Long orderId) {
+    public List<OrderResponse> userGetAllOrders(Long userId) {
+        return orderRepository.findAllByClientId(userId)
+                .stream()
+                .map(orderMapper::toDTO)
+                .toList();
+
+    }
+
+    @Transactional
+    public OrderResponse generatePayment(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
 
-        if (order.getStatus() == OrderStatus.CANCELED) {
-            throw new OrderStatusException("Cannot pay a canceled order");
+        if (order.getPayment() != null) {
+            throw new PaymentAlreadyExistsException("Payment already exists for this order");
         }
 
-        if (order.getStatus() == OrderStatus.PAID) {
-            throw new OrderStatusException("Order already has a payment");
+        if (order.getStatus() != OrderStatus.WAITING_PAYMENT) {
+            throw new OrderStatusException("Cannot generated a payment for an order with status: " + order.getStatus());
         }
 
         if (order.getItems().isEmpty()) {
@@ -80,12 +90,33 @@ public class OrderService {
         }
 
         paymentService.createPayment(order);
-        order.setStatus(OrderStatus.PAID);
-        orderRepository.save(order);
+        order.setStatus(OrderStatus.PENDING);
         return orderMapper.toDTO(order);
     }
 
-    @Scheduled(fixedRate = 25 * 60 * 1000)
+
+    @Scheduled(fixedRate = 30 * 1000)
+    @Transactional
+    public void processApprovedPayments() {
+        List<Order> ordersList = orderRepository.findByStatus(OrderStatus.PENDING);
+
+
+        ordersList.forEach(order -> {
+
+            if (order.getPayment() == null) {
+                return;
+            }
+            if (order.getPayment().getStatus() == PaymentStatus.APPROVED) {
+                order.setStatus(OrderStatus.PAID);
+            } else if (order.getPayment().getStatus() == PaymentStatus.CANCELED) {
+                order.setStatus(OrderStatus.CANCELED);
+            }
+        });
+
+    }
+
+    @Scheduled(fixedRate = 10 * 60 * 1000)
+    @Transactional
     public void cancelExpiredOrders() {
         int expirationInSeconds = 30 * 60;
         List<Order> expiredOrders = orderRepository.findByStatus(OrderStatus.WAITING_PAYMENT);
@@ -93,30 +124,30 @@ public class OrderService {
             if (order.getMoment().plusSeconds(expirationInSeconds).isBefore(Instant.now()))
                 order.setStatus(OrderStatus.CANCELED);
         });
-        orderRepository.saveAll(expiredOrders);
     }
 
-    @Scheduled(fixedRate = 10 * 60 * 1000)
+
+    @Scheduled(fixedRate = 60 * 1000)
+    @Transactional
     public void shippedOrders() {
         List<Order> shippedOrders = orderRepository.findByStatus(OrderStatus.PAID);
         shippedOrders.forEach(order -> {
             order.setStatus(OrderStatus.SHIPPED);
         });
-
-        orderRepository.saveAll(shippedOrders);
     }
 
-    public OrderResponse confirmDelivered (Long orderId) {
+    @Transactional
+    public OrderResponse confirmDelivered(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
-        if (order.getStatus() != OrderStatus.SHIPPED){
+        if (order.getStatus() != OrderStatus.SHIPPED) {
             throw new OrderStatusException("Order not shipped");
         }
 
         order.setStatus(OrderStatus.DELIVERED);
-        orderRepository.save(order);
         return orderMapper.toDTO(order);
     }
 
+    @Transactional
     public OrderResponse cancelOrder(Long orderId) {
 
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
@@ -128,11 +159,12 @@ public class OrderService {
             throw new OrderStatusException("Order already canceled");
         }
         order.setStatus(OrderStatus.CANCELED);
-        orderRepository.save(order);
+
 
         return orderMapper.toDTO(order);
     }
 
+    @Transactional
     public OrderResponse addItemInOrder(Long orderId, OrderItemRequest request) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
         Product product = productRepository.findById(request.productId()).orElseThrow(() -> new ResourceNotFoundException("Product not found " + request.productId()));
@@ -158,10 +190,11 @@ public class OrderService {
             order.addItem(orderItem);
         }
 
-        orderRepository.save(order);
+
         return orderMapper.toDTO(order);
     }
 
+    @Transactional
     public OrderResponse removeItemInOrder(Long orderId, Long productId) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
         OrderItem orderItem = order.getItems().stream()
@@ -173,10 +206,11 @@ public class OrderService {
         }
 
         order.removeItem(orderItem);
-        orderRepository.save(order);
         return orderMapper.toDTO(order);
     }
 
+
+    @Transactional
     public OrderResponse updateItemInOrder(Long orderId, Long productId, OrderItemRequest request) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found " + orderId));
         OrderItem orderItem = order.getItems().stream()
@@ -189,7 +223,6 @@ public class OrderService {
 
 
         orderItem.setQuantity(request.quantity());
-        orderRepository.save(order);
         return orderMapper.toDTO(order);
     }
 

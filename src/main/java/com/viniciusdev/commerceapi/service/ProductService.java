@@ -10,6 +10,7 @@ import com.viniciusdev.commerceapi.exception.ResourceNotFoundException;
 import com.viniciusdev.commerceapi.mapper.ProductMapper;
 import com.viniciusdev.commerceapi.database.repository.CategoryRepository;
 import com.viniciusdev.commerceapi.database.repository.ProductRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +37,7 @@ public class ProductService {
                 .map(productMapper::toDTO).toList();
     }
 
+    @Transactional
     public ProductResponse createProduct(ProductRequest request) {
         Product product = productMapper.toEntity(request);
         productRepository.save(product);
@@ -43,14 +45,15 @@ public class ProductService {
     }
 
 
+    @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest request){
         Product product = productRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Product not found " + id));
         productMapper.toUpdate(product,request);
-        productRepository.save(product);
         return productMapper.toDTO(product);
     }
 
 
+    @Transactional
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         if (!product.getOrders().isEmpty()) {
@@ -59,26 +62,26 @@ public class ProductService {
         productRepository.delete(product);
     }
 
+    @Transactional
     public ProductResponse addCategoriesToProduct(Long productId, Set<Long> categoryIds) {
         Product product = productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException("Product not found " + productId));
         categoryIds.forEach(categoryId -> {
             Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new ResourceNotFoundException("Category not found " + categoryId));
             product.addCategory(category);
         });
-        productRepository.save(product);
-
         return productMapper.toDTO(product);
     }
 
+    @Transactional
     public void removeCategoriesFromProducts(Long productId, Set<Long> categoryIds) {
         Product product = productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException("Product not found " + productId));
         categoryIds.forEach(categoryId -> {
             Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new ResourceNotFoundException("Category not found " + categoryId));
             product.removeCategory(category);
         });
-        productRepository.save(product);
     }
 
+    @Transactional
     public ProductResponse setCategoriesForProduct(Long productId, Set<Long> categoryIds) {
         Product product = productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException("Product not found " + productId));
         product.getCategories().clear();

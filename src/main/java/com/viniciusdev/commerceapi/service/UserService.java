@@ -6,6 +6,7 @@ import com.viniciusdev.commerceapi.dto.UserResponse;
 import com.viniciusdev.commerceapi.exception.ResourceNotFoundException;
 import com.viniciusdev.commerceapi.mapper.UserMapper;
 import com.viniciusdev.commerceapi.database.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -31,21 +32,17 @@ public class UserService {
         return userMapper.toDTO(user);
     }
 
-    public UserResponse create(UserRequest userRequest) {
-        User user = userMapper.toEntity(userRequest);
-        userRepository.save(user);
-        return userMapper.toDTO(user);
-    }
 
 
+    @Transactional
     public UserResponse update(Long id, UserRequest userRequest) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found " + id));
         userMapper.toUpdate(user, userRequest);
-        userRepository.save(user);
         return userMapper.toDTO(user);
     }
 
 
+    @Transactional
     public void delete(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         userRepository.delete(user);

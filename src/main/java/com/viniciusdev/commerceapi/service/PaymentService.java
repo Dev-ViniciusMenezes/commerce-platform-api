@@ -4,10 +4,12 @@ package com.viniciusdev.commerceapi.service;
 import com.viniciusdev.commerceapi.database.model.Order;
 import com.viniciusdev.commerceapi.database.model.Payment;
 import com.viniciusdev.commerceapi.dto.PaymentResponse;
+import com.viniciusdev.commerceapi.enums.PaymentStatus;
 import com.viniciusdev.commerceapi.exception.PaymentAlreadyExistsException;
 import com.viniciusdev.commerceapi.exception.ResourceNotFoundException;
 import com.viniciusdev.commerceapi.mapper.PaymentMapper;
 import com.viniciusdev.commerceapi.database.repository.PaymentRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,8 +24,11 @@ public class PaymentService {
     private final PaymentMapper paymentMapper;
 
 
+    @Transactional
     public PaymentResponse createPayment(Order order) {
-        Payment payment = new Payment(null, Instant.now(), order);
+        Payment payment = new Payment(null, Instant.now(), PaymentStatus.WAITING_PAYMENT, order);
+        payment.setStatus(PaymentStatus.APPROVED);
+        payment.setOrder(order);
         order.setPayment(payment);
         paymentRepository.save(payment);
         return paymentMapper.toDTO(payment);

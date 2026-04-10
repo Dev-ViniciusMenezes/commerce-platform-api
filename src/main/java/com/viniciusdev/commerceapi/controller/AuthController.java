@@ -8,6 +8,8 @@ import com.viniciusdev.commerceapi.dto.LoginResponse;
 import com.viniciusdev.commerceapi.dto.UserRequest;
 import com.viniciusdev.commerceapi.dto.UserResponse;
 import com.viniciusdev.commerceapi.mapper.UserMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Auth", description = "Management for authentication")
 @RestController
 @RequestMapping("/v1/auth")
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ public class AuthController {
     private final TokenService tokenService;
 
 
+    @Operation (summary = "Login")
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
@@ -39,6 +43,7 @@ public class AuthController {
     }
 
 
+    @Operation (summary = "Register")
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse register(@Valid @RequestBody UserRequest request) {

@@ -29,6 +29,12 @@ public class SecurityFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
+        String path = request.getRequestURI();
+
+        if (path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring("Bearer ".length());
             Optional <JWTUserData> optUser = tokenService.validateToken(token);
